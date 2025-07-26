@@ -14,11 +14,43 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                  git url:'https://github.com/abdulrazakmca/my-react-app.git',branch:'master',credentialsId:env.GITHUB_CREDENTIALS2
+                  git url:'https://github.com/abdulrazakmca/my-react-app.git',branch:'my-react-app',credentialsId:env.GITHUB_CREDENTIALS2
                   echo "Checkout Completed"
                 
             }
         }//end of Checkout
-    		
+    	stage('Build') {
+            steps {
+                    echo "Docker Build Started"
+					def dockerImage = docker.build -t "${imageName}:${imageTag}"
+				    echo "Docker Build End"
+			
+            }
+        }//end of Build
+      	 stage('Push Images')
+		 {
+            steps
+            {
+                script
+                {
+       //             docker login
+//docker tag devops:latest abdulrazakmca/devops:latest
+//docker push abdulrazakmca/devops:latest
+
+					docker.withRegistry(DOCKER_REGISTRY_URL,DOCKER_CREDENTIALS)
+					{
+					    docker.image("${imageName}:${imageTag}").tag()
+				    	docker.image("${imageName}:${imageTag}").push()
+					}
+				 }
+            }
+        }// End of Push Images
+        stage('Run') {
+            steps {
+                sh 'docker run -p 7979:80 my-creat-app'      
+			
+            }
+        }//end of Run
+    
     }
 }
