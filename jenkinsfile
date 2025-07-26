@@ -1,0 +1,24 @@
+pipeline {
+    agent any
+     environment{
+        MAVEN_HOME='/usr/share/maven'
+        
+        //SONAR_SCANNER=''
+        GITHUB_CREDENTIALS='devops_github_token'
+        GITHUB_CREDENTIALS2='github_token'
+		imageTag= 'latest'
+		DOCKER_CREDENTIALS='docker_token'
+		DOCKER_REGISTRY_URL='https://index.docker.io/v1'
+        
+    }
+    stages {
+        stage('Checkout') {
+            steps {
+                  git url:'https://github.com/abdulrazakmca/my-react-app.git',branch:'master',credentialsId:env.GITHUB_CREDENTIALS2
+                  echo "Checkout Completed"
+                
+            }
+        }//end of Checkout
+    		
+    }
+}
