@@ -1,56 +1,61 @@
 pipeline {
     agent any
-     environment{
-        MAVEN_HOME='/usr/share/maven'
-        
-        //SONAR_SCANNER=''
-        GITHUB_CREDENTIALS='devops_github_token'
-        GITHUB_CREDENTIALS2='github_token'
-		imageTag= 'latest'
-		DOCKER_CREDENTIALS='docker_token'
-		DOCKER_REGISTRY_URL='https://index.docker.io/v1'
-        
+    
+    environment {
+        MAVEN_HOME = '/usr/share/maven'
+        GITHUB_CREDENTIALS = 'devops_github_token'
+        GITHUB_CREDENTIALS2 = 'github_token'
+        imageName = 'abdulrazakmca/my-react-app'
+        imageTag = 'latest'
+        DOCKER_CREDENTIALS = 'dockerhub_token'
+        DOCKER_REGISTRY_URL = 'https://index.docker.io/v1'
     }
+    
     stages {
         stage('Checkout') {
             steps {
-                  git url:'https://github.com/abdulrazakmca/my-react-app.git',branch:'my-react-app',credentialsId:env.GITHUB_CREDENTIALS2
-                  echo "Checkout Completed"
-                
+                git url: 'https://github.com/abdulrazakmca/my-react-app.git', branch: 'my-react-app', credentialsId: env.GITHUB_CREDENTIALS2
+                echo "Checkout Completed"
             }
-        }//end of Checkout
-    	stage('Build') {
+        } // end of Checkout
+        
+        stage('Build') {
             steps {
+                script {
                     echo "Docker Build Started"
-					def dockerImage = docker.build -t "${imageName}:${imageTag}"
-				    echo "Docker Build End"
-			
+                    // Corrected docker.build syntax
+                    def dockerImage = docker.build("${imageName}:${imageTag}",".")
+                    echo "Docker Build End"
+                }
             }
-        }//end of Build
-      	 stage('Push Images')
-		 {
-            steps
-            {
-                script
-                {
-       //             docker login
-//docker tag devops:latest abdulrazakmca/devops:latest
-//docker push abdulrazakmca/devops:latest
+        } // end of Build
+        
+        stage('Push Images') {
+            steps {
+                script {    
+        //        sh 'sudo usermod -aG docker jenkins'
+	//sh 'docker push abdulrazakmca/my-react-app:latest'
+//sh 'echo "$SUDO_PASSWORD" | sudo -S docker push abdulrazakmca/my-react-app:latest'
 
-					docker.withRegistry(DOCKER_REGISTRY_URL,DOCKER_CREDENTIALS)
-					{
-					    docker.image("${imageName}:${imageTag}").tag()
-				    	docker.image("${imageName}:${imageTag}").push()
-					}
-				 }
+				   
+                    // Using the Docker Registry
+                    docker.withRegistry(DOCKER_REGISTRY_URL, DOCKER_CREDENTIALS) {
+                        // Tag the image properly before pushing
+                       //sh 'sudo docker push ${imageName}:${imageTag}'
+                        docker.image("${imageName}:${imageTag}").push()  // Push the image to the registry
+                    }
+                    echo 'End of push Image in dockerhub'
+                }
             }
-        }// End of Push Images
+        } // End of Push Images
+        
         stage('Run') {
             steps {
-                sh 'docker run -p 7979:80 my-creat-app'      
-			
+                script {
+                    // Make sure to run the correct image
+                    sh 'docker run -d -p 7979:80 abdulrazak/my-react-app'
+                }
             }
-        }//end of Run
-    
+        } // end of Run
     }
 }
